@@ -1,13 +1,12 @@
 cmake_minimum_required(VERSION 3.5)
 project(BundleFusion_Ubuntu)
 
-SET(CMAKE_BUILD_TYPE "Debug")
+SET(CMAKE_BUILD_TYPE "Release")
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
-SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
+SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/modules/")
 set(CUDA_NVCC_FLAGS "-g -G")
-find_package(OpenCV REQUIRED)
 
 find_package(GLFW3 REQUIRED)
 message(STATUS "Found GLFW3 in ${GLFW3_INCLUDE_DIR}")
@@ -29,15 +28,11 @@ find_package(CUDA)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
 
 find_package(Eigen3 REQUIRED)
-link_directories(${PROJECT_NAME}/lib)#https://blog.csdn.net/bigdog_1027/article/details/79113342
-#find_library
+
 include_directories(
         ${EIGEN3_INCLUDE_DIR}      
 )
 
-#INCLUDE_DIRECTORIES(/home/manifold/OpenNI-Linux-x64-2.3.0.43/Include)
-INCLUDE_DIRECTORIES(/home/manifold/ASUS-Linux-x64-OpenNI2.2/Include)
-include_directories(${OpenCV_INCLUDE_DIRS})
 
 include_directories(${OpenGL_INCLUDE_DIRS})
 link_directories(${OpenGL_LIBRARY_DIRS})
@@ -45,6 +40,10 @@ add_definitions(${OpenGL_DEFINITIONS})
 if(NOT OPENGL_FOUND)
     message(ERROR " OPENGL not found!")
 endif(NOT OPENGL_FOUND)
+
+set(mLib_DIR ../mLib/build/)
+find_package(mLib REQUIRED)
+message(STATUS "Found mLib:  " ${mLib_INCLUDE_DIRS} "\n\t\t" ${mLib_LIBS})
 
 find_package(OpenGL REQUIRED)
 find_package(X11 REQUIRED)  
@@ -54,28 +53,20 @@ include_directories(${CUDA_INCLUDE_DIRS})
 set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 set(CUDA_NVCC_FLAGS -arch=sm_61;-O3;-G;-g;-std=c++11)
 
-SET(CMAKE_BUILD_TYPE "Debug")
+SET(CMAKE_BUILD_TYPE "Release")
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
-SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
+SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3")
 set (CMAKE_CXX_STANDARD 11)
 SET(CMAKE_C_COMPILER g++)
 add_compile_options(-std=c++11)
 include_directories(
-${PROJECT_SOURCE_DIR}/external/mLib/include
-${PROJECT_SOURCE_DIR}/mLibExternal/include
+${mLib_INCLUDE_DIRS}
 ${PROJECT_SOURCE_DIR}/FriedLiver/Include/cutil/inc
 ${PROJECT_SOURCE_DIR}/FriedLiver/Include
 ${PROJECT_SOURCE_DIR}/FriedLiver/Include/Uplink
 ${PROJECT_SOURCE_DIR}/FriedLiver/Source
 ${PROJECT_SOURCE_DIR}/FriedLiver/Source/SiftGPU
 ${PROJECT_SOURCE_DIR}/FriedLiver/Source/Solver
-)
-add_library(${PROJECT_NAME} SHARED
-external/mLib/src/core-base/common.cpp
-external/mLib/src/core-util/timer.cpp
-external/mLib/src/core-util/utility.cpp
-external/mLib/include/mLibDepthCamera.cpp
-#external/mLib/src/ext-depthcamera/image.cpp
 )
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
@@ -86,7 +77,6 @@ file(GLOB CURRENT_SOURCES  FriedLiver/Source/*.cpp)
 CUDA_ADD_EXECUTABLE(FriedLiver 
 FriedLiver/Source/FriedLiver.cpp FriedLiver/Source/ConditionManager.cpp 
 FriedLiver/Source/RGBDSensor.cpp
-FriedLiver/Source/PrimeSenseSensor.cpp
 #FriedLiver/Source/BinaryDumpReader.cpp
 FriedLiver/Source/SensorDataReader.cpp
 FriedLiver/Source/CUDAImageManager.cpp
@@ -131,19 +121,15 @@ FriedLiver/Source/DepthSensing/CameraUtil.cu
 
 #FriedLiver/Source/DepthSensing/StdOutputLogger.cpp
 )
-#add_subdirectory(external/mLib)
-target_link_libraries(FriedLiver ${PROJECT_NAME} ${CUDA_LIBRARIES}
 
+target_link_libraries(FriedLiver ${CUDA_LIBRARIES}
+${mLib_LIBS}
 ${OPENGL_LIBRARIES}
 ${GLEW_LIBRARY}
 ${GLFW3_LIBRARY}
 GLEW
-glfw3
+glfw
 X11 Xrandr Xinerama Xi Xxf86vm Xcursor pthread dl
 GLU
-#${PROJECT_NAME}/lib/libfreeimage.a
-#/home/manifold/OpenNI-Linux-x64-2.3.0.43/Redist/libOpenNI2.so
-OpenNI2
-${OpenCV_LIBS}
 )
 
